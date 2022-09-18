@@ -1,3 +1,7 @@
+<Query Kind="Program">
+  <IncludeUncapsulator>false</IncludeUncapsulator>
+</Query>
+
 //Not great example, because we don't really see the product. PROVIDER is the product
 
 public class WeatherData		
