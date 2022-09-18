@@ -2,8 +2,6 @@
   <IncludeUncapsulator>false</IncludeUncapsulator>
 </Query>
 
-//Not great example, because we don't really see the product. PROVIDER is the product
-
 public class WeatherData		
 {
 	public float Temperature {get;}
@@ -16,62 +14,72 @@ public class WeatherData
 	}
 }
 
-public interface IWeatherDataProvider
+public abstract class IWeatherDataProvider
 {
-	public WeatherData GetData(int LocationHash);
+	protected readonly int cityHash;
+	public abstract WeatherData GetData();
+	
+	public IWeatherDataProvider(int cityHash)
+	{
+		this.cityHash = cityHash;
+	}
 }
 
 
 public class APIWeatherDataProvider : IWeatherDataProvider 			//CONCRETE PRODUCT
 {
-	public WeatherData GetData(int LocationHash)
+	public override WeatherData GetData()
 	{
-		"MAKING API CALL FOR DATA...".Dump();
-		return new WeatherData(3.21f,74);
+		"MAKING API CALL FOR DATA USING CITY HASH...".Dump();
+		return new WeatherData(3.21f,74);			//some random data from 'api'
 	}
+	
+	public APIWeatherDataProvider(int cityHash) : base(cityHash){}
 }
 
 public class SensorWeatherDataProvider : IWeatherDataProvider 		//CONCRETE PRODUCT
 {
-	public WeatherData GetData(int LocationHash)
+	public override WeatherData GetData()
 	{
-		"GETTING VALUES FROM THE SENSORS...".Dump();
-		return new WeatherData(7.12f,66);
+		"GETTING VALUES FROM THE SENSORS USING CITY HASH...".Dump();
+		return new WeatherData(7.12f,66);							//some random data from 'sensor'
 	}
+	
+	public SensorWeatherDataProvider (int cityHash) : base(cityHash){}
 }
 
 
-public abstract class WeatherDataGetter	//Creator INTERFACE. It doesn't have to create the provider during every call.
+public abstract class WeatherDataProviderCreator	//Creator INTERFACE. It doesn't have to create the provider during every call.
 {
-	protected abstract IWeatherDataProvider CreateProvider();
+	protected abstract IWeatherDataProvider CreateProvider(int hash);
 	
-	public WeatherData GetWeatherData(string cityName)
+	public IWeatherDataProvider GetWeatherDataProvider(string cityName)
 	{
 		"========SHARED LOGICS========".Dump();
 		"Validating city name...".Dump();
 		"Getting city location hash...".Dump();
 		int hash = cityName.Length;
-		"====END OF SHARED LOGICS====".Dump();
+		"=====END OF SHARED LOGICS=====".Dump();
 		
-		var provider = CreateProvider();
-		return provider.GetData(hash);
+		var provider = CreateProvider(hash);
+		return provider;
 	}
 }
 
 
-public class APIWeatherDataGetter : WeatherDataGetter	//Concrete Creator
+public class APIWeatherDataProviderCreator : WeatherDataProviderCreator	//Concrete Creator
 {
-	protected override IWeatherDataProvider CreateProvider()
+	protected override IWeatherDataProvider CreateProvider(int hash)
 	{
-		return new APIWeatherDataProvider();
+		return new APIWeatherDataProvider(hash);
 	}
 }
 
-public class SensorWeatherDataGetter : WeatherDataGetter //Concrete Creator
+public class SensorWeatherDataProviderCreator : WeatherDataProviderCreator //Concrete Creator
 {
-	protected override IWeatherDataProvider CreateProvider()
+	protected override IWeatherDataProvider CreateProvider(int hash)
 	{
-		return new SensorWeatherDataProvider();
+		return new SensorWeatherDataProvider(hash);
 	}
 }
 
@@ -79,8 +87,10 @@ public class SensorWeatherDataGetter : WeatherDataGetter //Concrete Creator
 void Main()
 {
 	"Get data from API".Dump();
-	new APIWeatherDataGetter().GetWeatherData("Cracow").Dump();
+	var apiProvider = new APIWeatherDataProviderCreator().GetWeatherDataProvider("Cracow");
+	apiProvider.GetData().Dump();
 	
-	"Get data from Sensors".Dump();
-	new SensorWeatherDataGetter().GetWeatherData("Cracow").Dump();
+	"\nGet data from Sensors".Dump();
+	var sensorProvider = new SensorWeatherDataProviderCreator().GetWeatherDataProvider("Cracow");
+	sensorProvider.GetData().Dump();
 }
